@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepSeek Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f5f5f5;
+            margin: 0;
+        }
+
+        .chat-container {
+            width: 400px;
+            background: white;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .chat-box {
+            height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .input-container {
+            display: flex;
+            padding: 10px;
+        }
+
+        input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 8px 15px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-left: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .user {
+            text-align: right;
+            color: blue;
+            margin: 5px 0;
+        }
+
+        .bot {
+            text-align: left;
+            color: green;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-box" id="chat-box"></div>
+        <div class="input-container">
+            <input type="text" id="user-input" placeholder="اكتب رسالتك هنا...">
+            <button id="send-btn">إرسال</button>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = "sk-25d85de267b74d74bb23d472a07ab807"; // استبدل بمفتاح DeepSeek API الخاص بك
+
+        document.getElementById("send-btn").addEventListener("click", sendMessage);
+        document.getElementById("user-input").addEventListener("keypress", function (e) {
+            if (e.key === "Enter") sendMessage();
+        });
+
+        async function sendMessage() {
+            let userInput = document.getElementById("user-input").value;
+            if (!userInput.trim()) return;
+
+            appendMessage("user", userInput);
+            document.getElementById("user-input").value = "";
+
+            try {
+                let response = await fetch("https://api.deepseek.com/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: "deepseek-chat", // تأكد من اسم النموذج الصحيح
+                        messages: [{ role: "user", content: userInput }]
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error("خطأ في الاتصال بالخادم");
+                }
+
+                let data = await response.json();
+                let botMessage = data.choices[0].message.content;
+                appendMessage("bot", botMessage);
+            } catch (error) {
+                console.error("Error:", error);
+                appendMessage("bot", "عذرًا، حدث خطأ في الاتصال بـ DeepSeek API.");
+            }
+        }
+
+        function appendMessage(role, text) {
+            let chatBox = document.getElementById("chat-box");
+            let messageDiv = document.createElement("div");
+            messageDiv.classList.add(role);
+            messageDiv.innerText = text;
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
